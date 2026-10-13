@@ -1,4 +1,6 @@
-# wam
+# WoW Addon Manager
+
+Disclaimer: This app is 100% vibe coded, this disclaimer is literally the only thing I've written myself for this whole project so far. I just wanted a fun TUI Addon Manager and didn't like using CurseForge. I know nothing about coding but it seems to be working really well so wish me luck and god help us all as the robots take over.
 
 An open-source WoW addon manager for Linux, built for WoW Forever first.
 No ads, no account, no Overwolf.
