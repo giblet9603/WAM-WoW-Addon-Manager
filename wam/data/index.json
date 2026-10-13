@@ -1,0 +1,146 @@
+{
+ "addons": [
+  {
+   "categories": [
+    "auction-economy",
+    "tooltips"
+   ],
+   "description": "Makes it easier to use the auction house and track the value of items.",
+   "download": "manual",
+   "featured": false,
+   "folders": [
+    "Auctionator"
+   ],
+   "forever": "yes",
+   "homepage": "https://www.curseforge.com/wow/addons/auctionator",
+   "id": "auctionator",
+   "name": "Auctionator",
+   "sources": {
+    "curseforge": 6124
+   }
+  },
+  {
+   "categories": [
+    "fishing"
+   ],
+   "description": "Fishing companion for WoW Forever: gear, lures, discoveries and session statistics.",
+   "download": "allowed",
+   "featured": false,
+   "folders": [],
+   "forever": "yes",
+   "homepage": "https://github.com/critolis/Fishcraft",
+   "id": "fishcraft",
+   "name": "Fishcraft",
+   "sources": {
+    "github": "critolis/Fishcraft"
+   }
+  },
+  {
+   "categories": [],
+   "description": "",
+   "download": "allowed",
+   "featured": false,
+   "folders": [
+    "ForeverUtilities"
+   ],
+   "forever": "yes",
+   "homepage": "",
+   "id": "forever-classmate",
+   "name": "Forever Classmate",
+   "sources": {
+    "curseforge": 1700438
+   }
+  },
+  {
+   "categories": [
+    "gear",
+    "leveling-quests"
+   ],
+   "description": "Leveling companion for WoW Forever: the best item for each slot at every level from 1 to 60, and where to get it.",
+   "download": "allowed",
+   "featured": false,
+   "folders": [
+    "GearQuestForever*"
+   ],
+   "forever": "yes",
+   "homepage": "https://www.curseforge.com/wow/addons/gearquest-forever",
+   "id": "gearquest-forever",
+   "name": "GearQuest - Forever",
+   "sources": {
+    "curseforge": 1698950
+   }
+  },
+  {
+   "categories": [
+    "professions"
+   ],
+   "description": "Guild craft and personal trade skills.",
+   "download": "allowed",
+   "featured": false,
+   "folders": [
+    "ProfessionMaster"
+   ],
+   "forever": "yes",
+   "homepage": "https://www.curseforge.com/wow/addons/profession-master",
+   "id": "profession-master",
+   "name": "Profession Master",
+   "sources": {
+    "curseforge": 574050
+   }
+  },
+  {
+   "categories": [],
+   "description": "",
+   "download": "allowed",
+   "featured": false,
+   "folders": [
+    "ShortestPathForever"
+   ],
+   "forever": "yes",
+   "homepage": "https://github.com/cjber/shortest-path-forever",
+   "id": "shortest-path-forever",
+   "name": "Shortest Path Forever",
+   "sources": {
+    "curseforge": 1708599,
+    "github": "cjber/shortest-path-forever",
+    "wago": "b6Xy1wKp"
+   }
+  },
+  {
+   "categories": [
+    "maps-navigation"
+   ],
+   "description": "Waypoint arrow for WoW Forever, with /way commands and TomTom compatibility.",
+   "download": "allowed",
+   "featured": false,
+   "folders": [
+    "WaypointTracker",
+    "WaypointTracker_Data"
+   ],
+   "forever": "yes",
+   "homepage": "https://github.com/sanjaygbhat/wowforever-waypoint-tracker",
+   "id": "waypoint-tracker",
+   "name": "Waypoint Tracker",
+   "sources": {
+    "github": "sanjaygbhat/wowforever-waypoint-tracker"
+   }
+  }
+ ],
+ "categories": {
+  "auction-economy": "Auction & economy",
+  "audio": "Audio & voice",
+  "bags-inventory": "Bags & inventory",
+  "chat-social": "Chat & social",
+  "combat": "Combat",
+  "dungeons-raids": "Dungeons & raids",
+  "fishing": "Fishing",
+  "gear": "Gear & upgrades",
+  "leveling-quests": "Quests & leveling",
+  "maps-navigation": "Maps & navigation",
+  "nameplates-unit-frames": "Nameplates & unit frames",
+  "professions": "Professions",
+  "tooltips": "Tooltips",
+  "utilities": "Utilities"
+ },
+ "schema": 1
+}

@@ -1,0 +1,18 @@
+{
+  "id": "waypoint-tracker",
+  "name": "Waypoint Tracker",
+  "description": "Waypoint arrow for WoW Forever, with /way commands and TomTom compatibility.",
+  "categories": [
+    "maps-navigation"
+  ],
+  "folders": [
+    "WaypointTracker",
+    "WaypointTracker_Data"
+  ],
+  "sources": {
+    "github": "sanjaygbhat/wowforever-waypoint-tracker"
+  },
+  "forever": "yes",
+  "download": "allowed",
+  "homepage": "https://github.com/sanjaygbhat/wowforever-waypoint-tracker"
+}

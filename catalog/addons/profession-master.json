@@ -1,0 +1,17 @@
+{
+  "id": "profession-master",
+  "name": "Profession Master",
+  "description": "Guild craft and personal trade skills.",
+  "categories": [
+    "professions"
+  ],
+  "folders": [
+    "ProfessionMaster"
+  ],
+  "sources": {
+    "curseforge": 574050
+  },
+  "forever": "yes",
+  "download": "allowed",
+  "homepage": "https://www.curseforge.com/wow/addons/profession-master"
+}

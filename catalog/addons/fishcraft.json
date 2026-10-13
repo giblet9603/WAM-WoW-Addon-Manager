@@ -1,0 +1,15 @@
+{
+  "id": "fishcraft",
+  "name": "Fishcraft",
+  "description": "Fishing companion for WoW Forever: gear, lures, discoveries and session statistics.",
+  "categories": [
+    "fishing"
+  ],
+  "folders": [],
+  "sources": {
+    "github": "critolis/Fishcraft"
+  },
+  "forever": "yes",
+  "download": "allowed",
+  "homepage": "https://github.com/critolis/Fishcraft"
+}

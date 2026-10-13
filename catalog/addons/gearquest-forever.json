@@ -1,0 +1,18 @@
+{
+  "id": "gearquest-forever",
+  "name": "GearQuest - Forever",
+  "description": "Leveling companion for WoW Forever: the best item for each slot at every level from 1 to 60, and where to get it.",
+  "categories": [
+    "gear",
+    "leveling-quests"
+  ],
+  "folders": [
+    "GearQuestForever*"
+  ],
+  "sources": {
+    "curseforge": 1698950
+  },
+  "forever": "yes",
+  "download": "allowed",
+  "homepage": "https://www.curseforge.com/wow/addons/gearquest-forever"
+}

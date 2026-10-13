@@ -1,0 +1,12 @@
+{
+  "id": "forever-classmate",
+  "name": "Forever Classmate",
+  "folders": [
+    "ForeverUtilities"
+  ],
+  "sources": {
+    "curseforge": 1700438
+  },
+  "forever": "yes",
+  "download": "allowed"
+}

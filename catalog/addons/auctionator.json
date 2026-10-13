@@ -1,0 +1,18 @@
+{
+  "id": "auctionator",
+  "name": "Auctionator",
+  "description": "Makes it easier to use the auction house and track the value of items.",
+  "categories": [
+    "auction-economy",
+    "tooltips"
+  ],
+  "folders": [
+    "Auctionator"
+  ],
+  "sources": {
+    "curseforge": 6124
+  },
+  "forever": "yes",
+  "download": "manual",
+  "homepage": "https://www.curseforge.com/wow/addons/auctionator"
+}

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wam"
+version = "0.3.0"
+description = "An open-source WoW addon manager for Linux (WoW Forever first)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+]
+dependencies = ["textual>=8.0"]
+
+[project.scripts]
+wam = "wam.core:main"
+
+[tool.setuptools]
+packages = ["wam"]
+
+[tool.setuptools.package-data]
+wam = ["data/*.json"]

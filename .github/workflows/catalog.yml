@@ -1,0 +1,65 @@
+# Checks catalog entries on every pull request, and publishes the merged index
+# (https://<you>.github.io/<repo>/index.json) to GitHub Pages when changes land on main.
+name: Catalog
+
+on:
+  pull_request:
+    paths: ["catalog/**", "wam/catalog.py", "wam/data/**", ".github/workflows/catalog.yml"]
+  push:
+    branches: [main]
+    paths: ["catalog/**", "wam/catalog.py", ".github/workflows/catalog.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"   # weekly, so star counts and update dates stay fresh
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-pages
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check every catalog entry
+        run: python -m wam.catalog validate
+      - name: Check the bundled copy matches the entries
+        run: |
+          python -m wam.catalog build --out /tmp/index.json
+          diff /tmp/index.json wam/data/index.json || {
+            echo "wam/data/index.json is out of date. Run: python -m wam.catalog build --out wam/data/index.json"
+            exit 1
+          }
+
+  deploy:
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the index (with GitHub star counts and update dates)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python -m wam.catalog build --out site/index.json --stamp --github-stats
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

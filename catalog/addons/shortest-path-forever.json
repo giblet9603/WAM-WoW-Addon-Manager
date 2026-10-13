@@ -1,0 +1,15 @@
+{
+  "id": "shortest-path-forever",
+  "name": "Shortest Path Forever",
+  "folders": [
+    "ShortestPathForever"
+  ],
+  "sources": {
+    "github": "cjber/shortest-path-forever",
+    "curseforge": 1708599,
+    "wago": "b6Xy1wKp"
+  },
+  "forever": "yes",
+  "download": "allowed",
+  "homepage": "https://github.com/cjber/shortest-path-forever"
+}
