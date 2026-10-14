@@ -61,3 +61,16 @@ async def nokey():
         await app.workers.wait_for_complete(); await pilot.pause()
         ok("wam cf-key" in str(scr.query_one("#info").render()), "no key shows the 'wam cf-key' hint")
 asyncio.run(nokey())
+
+# default source follows the key: no key -> catalog, key present -> CurseForge (browsing works with an empty box)
+core.cf_get = fake_cf_get
+async def default_source(has_key):
+    core.get_cf_key = lambda: "k" if has_key else None
+    app = tui.WamApp()
+    async with app.run_test(size=(140, 40)) as pilot:
+        await pilot.pause(); await app.workers.wait_for_complete(); await pilot.pause()
+        await pilot.press("d"); await pilot.pause(); await app.workers.wait_for_complete(); await pilot.pause()
+        scr = app.screen
+        return scr.query_one("#source").value, scr.query_one("#results").row_count
+v, n = asyncio.run(default_source(False)); ok(v == "catalog", "no key: Discover opens on the catalog")
+v, n = asyncio.run(default_source(True)); ok(v == "curseforge" and n == 2, f"key saved: Discover opens on CurseForge and lists popular addons ({n})")

@@ -559,15 +559,15 @@ class DiscoverScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Static("Curated catalog: addons the maintainers have checked. GitHub search and CurseForge search: wider but rougher. "
+        yield Static("CurseForge search: the biggest selection (needs a free key: run `wam cf-key`). Curated catalog: addons the maintainers have checked. GitHub search: wider but rougher. "
                      "Type and press Enter, then pick a result and press Enter to install it.",
                      id="hint", markup=False)
         with Horizontal(id="controls"):
-            yield Input(placeholder="Search by name or topic, e.g. fishing (empty = browse everything)", id="q")
+            yield Input(placeholder="Search by name or topic, e.g. fishing (empty = browse popular addons)", id="q")
         with Horizontal(id="filters"):
             yield Label("Source ")
             yield Select([("Curated catalog", "catalog"), ("GitHub search", "github"), ("CurseForge search", "curseforge")],
-                         value="catalog", allow_blank=False, id="source")
+                         value="curseforge" if core.get_cf_key() else "catalog", allow_blank=False, id="source")
             yield Select([(label, label) for label in core.SEARCH_CATEGORIES],
                          value="Any category", allow_blank=False, id="cat")
             yield Select([(label, key) for key, label in core.SEARCH_SORTS.items()],
@@ -587,6 +587,8 @@ class DiscoverScreen(Screen):
         else:
             self.set_info("Loading the catalog...")
             self.load_index()
+            if self.query_one("#source", Select).value == "curseforge":
+                self.run_search()
 
     @work(thread=True, group="discover-catalog")
     def load_index(self) -> None:
@@ -639,7 +641,7 @@ class DiscoverScreen(Screen):
             self.show_results(results, None, sort, "catalog")
             return
         text = " ".join(w for w in (query, core.SEARCH_CATEGORIES.get(category, "")) if w)
-        if not text and not forever:
+        if not text and not forever and source == "github":
             self.query_one("#results", DataTable).clear()
             self.set_info("Type something to search for, or pick a category.")
             return

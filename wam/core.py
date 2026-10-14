@@ -1239,7 +1239,7 @@ def search_curseforge(query, sort="best", forever_only=False, limit=30):
     """Search CurseForge's WoW addons live (needs the user's own API key; see `wam cf-key`).
     Returns rows shaped like the catalog/GitHub results so the Discover screen can show them."""
     params = {"gameId": CF_WOW_GAME_ID, "searchFilter": query, "pageSize": 50,
-              "sortField": CF_SORT_FIELDS.get(sort, 1), "sortOrder": "desc"}
+              "sortField": CF_SORT_FIELDS.get(sort if query else "popular", 1), "sortOrder": "desc"}
     mods = cf_get("/v1/mods/search", params)["data"]
     prefix = get_settings(load_config())["forever_version_prefix"]
     out = []
