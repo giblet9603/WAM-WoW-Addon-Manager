@@ -55,8 +55,8 @@ async def scenario():
         await pilot.press("d"); await settle(pilot)
         ok(name(app) == "DiscoverScreen" and app.screen.query_one("#source").value == "catalog", "Discover opens on the catalog")
         ok(col(app, 0) == ["Fishy Catalog Addon", "Manual Thing", "Waypoint Ish"], f"empty query browses everything: {col(app, 0)}")
-        ok(col(app, 1) == ["yes", "?", "yes"] and col(app, 2) == ["GitHub", "CurseForge (manual)", "GitHub"], "Forever and Source columns come from the catalog entries")
-        ok(col(app, 3) == ["12", "", "3"] and col(app, 4)[0] == "2026-10-01", "stars and dates shown when known, blank when not")
+        ok(col(app, 2) == ["yes", "?", "yes"] and col(app, 3) == ["GitHub", "CurseForge (manual)", "GitHub"], "Forever and Source columns come from the catalog entries")
+        ok(col(app, 4) == ["12", "", "3"] and col(app, 5)[0] == "2026-10-01", "stars and dates shown when known, blank when not")
         ok("3 addon(s) from the test catalog" in text(app.screen.query_one("#info")), "info line says where results came from")
 
         app.screen.query_one("#q").value = "fish"; await pilot.press("enter"); await settle(pilot)
@@ -76,11 +76,15 @@ async def scenario():
         table = app.screen.query_one("#results"); table.focus()
         table.move_cursor(row=table.get_row_index("curseforge:77")); await settle(pilot)
         await pilot.press("enter"); await settle(pilot)
-        ok(name(app) == "MessageScreen" and "third-party" in text(app.screen.query_one(".dialog-body")), "a manual-download entry explains itself instead of installing")
+        ok(name(app) == "AddonInfoScreen" and "third-party" in text(app.screen.query_one(".dialog-body")), "a manual-download entry's details say it can't be installed")
+        await pilot.press("i"); await settle(pilot)
+        ok(name(app) == "MessageScreen" and "third-party" in text(app.screen.query_one(".dialog-body")), "and trying to install it explains instead of installing")
         await pilot.press("escape"); await settle(pilot)
         table.move_cursor(row=table.get_row_index("a/fishy")); await settle(pilot)
         await pilot.press("enter"); await settle(pilot)
-        ok(name(app) == "ConfirmScreen" and "a/fishy" in text(app.screen.query_one(".dialog-body")), "Enter on a catalog result starts the install flow")
+        ok(name(app) == "AddonInfoScreen", "Enter on a catalog result shows its details")
+        await pilot.press("i"); await settle(pilot)
+        ok(name(app) == "ConfirmScreen" and "a/fishy" in text(app.screen.query_one(".dialog-body")), "Install from the details starts the install flow")
         await pilot.press("n"); await settle(pilot)
 
         # ---- switching to GitHub search

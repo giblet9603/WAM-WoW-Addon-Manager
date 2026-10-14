@@ -74,3 +74,43 @@ async def default_source(has_key):
         return scr.query_one("#source").value, scr.query_one("#results").row_count
 v, n = asyncio.run(default_source(False)); ok(v == "catalog", "no key: Discover opens on the catalog")
 v, n = asyncio.run(default_source(True)); ok(v == "curseforge" and n == 2, f"key saved: Discover opens on CurseForge and lists popular addons ({n})")
+
+# ---- details screen with the page link, and the new column order
+import webbrowser
+OPENED = []
+webbrowser.open = lambda url: OPENED.append(url) or True
+core.get_cf_key = lambda: "k"
+LONG = "A very long description that goes on and on about everything this addon can do for you " * 3
+core.cf_get = lambda path, params=None: {"data": [
+    {"id": 6124, "name": "Auctionator With A Really Very Long Name Indeed", "summary": LONG, "slug": "auctionator",
+     "dateModified": "2026-10-02T10:00:00Z", "links": {"websiteUrl": "https://www.curseforge.com/wow/addons/auctionator"},
+     "latestFilesIndexes": [{"gameVersion": "1.60.1"}]},
+    {"id": 7, "name": "Slugless", "summary": "x", "dateModified": "2026-01-01", "links": {}, "latestFilesIndexes": []},
+    {"id": 8, "name": "Odd Link", "summary": "x", "dateModified": "2026-01-01", "links": {"websiteUrl": "javascript:alert(1)"}, "latestFilesIndexes": []}]}
+rows = core.search_curseforge("x")
+ok(rows[1]["url"] == "https://www.curseforge.com/projects/7", "an addon with no page link still gets a CurseForge link")
+
+async def details():
+    app = tui.WamApp()
+    async with app.run_test(size=(150, 40)) as pilot:
+        await pilot.pause(); await app.workers.wait_for_complete(); await pilot.pause()
+        await pilot.press("d"); await pilot.pause(); await app.workers.wait_for_complete(); await pilot.pause()
+        scr = app.screen
+        t = scr.query_one("#results")
+        heads = [str(c.label) for c in t.columns.values()]
+        ok(heads == ["Addon", "Description", "Forever", "Source", "Stars", "Updated"], f"column order: {heads}")
+        name0, desc0 = str(t.get_row_at(0)[0]), str(t.get_row_at(0)[1])
+        ok(len(name0) <= 26 and name0.endswith("…") and len(desc0) <= 40 and desc0.endswith("…"), "long names and descriptions are shortened in the table")
+        t.focus(); await pilot.press("enter"); await pilot.pause()
+        ok(type(app.screen).__name__ == "AddonInfoScreen", "Enter opens the details")
+        body = str(app.screen.query_one(".dialog-body").render())
+        ok("https://www.curseforge.com/wow/addons/auctionator" in body and LONG[:60] in body, "details show the page link and the full description")
+        await pilot.press("o"); await pilot.pause()
+        ok(OPENED == ["https://www.curseforge.com/wow/addons/auctionator"], "o opens the page in a browser")
+        await pilot.press("escape"); await pilot.pause()
+        ok(type(app.screen).__name__ == "DiscoverScreen", "Esc goes back to the results")
+        t.move_cursor(row=2); await pilot.press("enter"); await pilot.pause()
+        OPENED.clear(); await pilot.press("o"); await pilot.pause()
+        ok(OPENED == [] and "no page link" in str(app.screen.query_one(".dialog-body").render()), "a non-web link is never opened")
+        await pilot.press("escape"); await pilot.pause()
+asyncio.run(details())

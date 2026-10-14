@@ -1258,7 +1258,9 @@ def search_curseforge(query, sort="best", forever_only=False, limit=30):
             "forever": "yes" if claims_forever else "-",
             "source": "CurseForge" + (" (manual)" if blocked else ""),
             "archived": False,
-            "url": (m.get("links") or {}).get("websiteUrl", ""),
+            "url": (m.get("links") or {}).get("websiteUrl")
+                   or (f"https://www.curseforge.com/wow/addons/{m['slug']}" if m.get("slug") else
+                       f"https://www.curseforge.com/projects/{m['id']}"),
         })
     return out[:limit]
 
@@ -1277,7 +1279,8 @@ def catalog_results(index, query="", category_id=None, sort="best", verified_onl
             "forever": {"yes": "yes", "unknown": "?", "no": "no"}[e["forever"]],
             "source": ("GitHub" if sources.get("github") else "CurseForge") + (" (manual)" if e["download"] == "manual" else ""),
             "archived": False,
-            "url": e["homepage"],
+            "url": e["homepage"] or (f"https://www.curseforge.com/projects/{sources['curseforge']}"
+                                     if sources.get("curseforge") else ""),
         })
     return out
 

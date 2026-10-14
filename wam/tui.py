@@ -8,6 +8,7 @@ that changes your game folder asks first.
 
 from __future__ import annotations
 
+import webbrowser
 from pathlib import Path
 
 from rich.text import Text
@@ -64,6 +65,18 @@ def short_source(key: str | None) -> str:
     return key if len(key) <= 24 else key[:23] + "…"
 
 
+def trim(text: str, width: int) -> str:
+    """One line, at most `width` characters, so table columns stay tidy."""
+    text = " ".join(str(text or "").split())
+    return text if len(text) <= width else text[: width - 1].rstrip() + "…"
+
+
+def safe_web_link(url: str | None) -> str | None:
+    """Only ordinary web links are ever opened in a browser."""
+    url = (url or "").strip()
+    return url if url.startswith(("https://", "http://")) else None
+
+
 # ---------------------------------------------------------------------------
 # Small pop-up dialogs
 # ---------------------------------------------------------------------------
@@ -114,6 +127,64 @@ class ConfirmScreen(ModalScreen[bool]):
 
     def action_no(self) -> None:
         self.dismiss(False)
+
+
+class AddonInfoScreen(ModalScreen[str | None]):
+    """Details for one search result, with its web page link (screenshots live there).
+    Closes with "install" if the person chooses to install it, otherwise None."""
+    BINDINGS = [Binding("i", "install", "Install"), Binding("o", "open_page", "Open page"),
+                Binding("escape", "close", "Back")]
+
+    def __init__(self, result: dict):
+        super().__init__()
+        self.result = result
+        self.link = safe_web_link(result.get("url"))
+
+    def compose(self) -> ComposeResult:
+        r = self.result
+        forever = r.get("forever", False)
+        forever = (("claims to support it" if forever else "not stated") if isinstance(forever, bool)
+                   else {"yes": "yes", "?": "unknown", "no": "no", "-": "not stated"}.get(forever, str(forever)))
+        lines = [r.get("desc") or "(no description)", ""]
+        lines.append(f"Source  : {r.get('source') or 'GitHub'}")
+        if r.get("key"):
+            lines.append(f"ID      : {str(r['key']).replace('curseforge:', 'cf:')}   (what `wam i` takes)")
+        lines.append(f"Forever : {forever}")
+        if r.get("stars") is not None:
+            lines.append(f"Stars   : {r['stars']}")
+        if r.get("updated"):
+            lines.append(f"Updated : {r['updated']}")
+        lines += ["", "Page    : " + (self.link or "(no page link for this addon)")]
+        if self.link:
+            lines.append("          (screenshots and comments are there; press o to open it)")
+        if "(manual)" in (r.get("source") or ""):
+            lines += ["", "The author doesn't allow third-party downloads, so wam can't install this one."]
+        with Vertical(classes="dialog"):
+            yield Label(r.get("name") or r.get("key") or "Addon", classes="dialog-title")
+            yield Static("\n".join(lines), markup=False, classes="dialog-body")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Install (i)", variant="success", id="install")
+                yield Button("Open page (o)", id="open")
+                yield Button("Back (esc)", id="back")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        {"install": self.action_install, "open": self.action_open_page}.get(event.button.id, self.action_close)()
+
+    def action_install(self) -> None:
+        self.dismiss("install")
+
+    def action_open_page(self) -> None:
+        if not self.link:
+            self.notify("This addon has no page link.", severity="warning")
+            return
+        try:
+            webbrowser.open(self.link)
+            self.notify("Opening the page in your browser...")
+        except Exception:
+            self.notify(f"Couldn't open a browser. The link is: {self.link}", severity="warning")
+
+    def action_close(self) -> None:
+        self.dismiss(None)
 
 
 class PromptScreen(ModalScreen[str | None]):
@@ -556,11 +627,12 @@ class DiscoverScreen(Screen):
         super().__init__()
         self.index = None
         self.origin = ""
+        self.shown: dict[str, dict] = {}        # row key -> the result on that row
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static("CurseForge search: the biggest selection (needs a free key: run `wam cf-key`). Curated catalog: addons the maintainers have checked. GitHub search: wider but rougher. "
-                     "Type and press Enter, then pick a result and press Enter to install it.",
+                     "Type and press Enter, then pick a result and press Enter to see its details and page link.",
                      id="hint", markup=False)
         with Horizontal(id="controls"):
             yield Input(placeholder="Search by name or topic, e.g. fishing (empty = browse popular addons)", id="q")
@@ -579,7 +651,10 @@ class DiscoverScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#results", DataTable).add_columns("Addon", "Forever", "Source", "Stars", "Updated", "Description")
+        table = self.query_one("#results", DataTable)
+        table.add_column("Addon", width=26)
+        table.add_column("Description", width=40)
+        table.add_columns("Forever", "Source", "Stars", "Updated")
         self.query_one("#q", Input).focus()
         if self.app.catalog_index is not None:
             self.index, self.origin = self.app.catalog_index, self.app.catalog_origin
@@ -660,6 +735,7 @@ class DiscoverScreen(Screen):
     def show_results(self, results, err, sort, source) -> None:
         table = self.query_one("#results", DataTable)
         table.clear()
+        self.shown = {}
         if err:
             self.set_info(err)
             return
@@ -668,12 +744,13 @@ class DiscoverScreen(Screen):
             if r["key"] in seen:
                 continue
             seen.add(r["key"])
-            name = (r["key"] if source == "github" else r["name"]) + ("  [archived]" if r.get("archived") else "")
+            self.shown[r["key"]] = r
+            name = trim((r["key"] if source == "github" else r["name"]) + ("  [archived]" if r.get("archived") else ""), 26)
             forever = r.get("forever", False)
             forever = ("claims" if forever else "-") if isinstance(forever, bool) else forever
             stars = "" if r.get("stars") is None else str(r["stars"])
-            table.add_row(Text(name), Text(forever), Text(r.get("source") or "GitHub"), Text(stars),
-                          Text(r.get("updated") or ""), Text((r.get("desc") or "")[:80]), key=r["key"])
+            table.add_row(Text(name), Text(trim(r.get("desc"), 40)), Text(forever), Text(r.get("source") or "GitHub"),
+                          Text(stars), Text(r.get("updated") or ""), key=r["key"])
         label = core.SEARCH_SORTS.get(sort, sort).lower()
         if source == "catalog":
             self.set_info(f"{len(seen)} addon(s) from the {self.origin} catalog, sorted by {label}.  Enter installs the highlighted one."
@@ -688,8 +765,12 @@ class DiscoverScreen(Screen):
 
     @on(DataTable.RowSelected, "#results")
     def _chosen(self, event: DataTable.RowSelected) -> None:
-        if event.row_key.value:
-            self.app.begin_install(event.row_key.value)
+        key = event.row_key.value
+        if not key:
+            return
+        result = self.shown.get(key) or {"key": key, "name": key}
+        self.app.push_screen(AddonInfoScreen(result),
+                             lambda choice: self.app.begin_install(key) if choice == "install" else None)
 
 
 # ---------------------------------------------------------------------------
@@ -1039,6 +1120,8 @@ class WamApp(App):
             lines.append(f"Replaces: {previous.get('label') or previous['tag']}")
             if previous["tag"] == cand["tag"]:
                 lines.append("(You already have this version; this just refreshes the files.)")
+        if cand.get("page"):
+            lines.append(f"Page    : {cand['page']}")
         lines += [f"Into    : {self.install['label']}"] + [f"Note    : {n}" for n in cand.get("notes", [])]
         lines += ["", "Anything it replaces is backed up first. Close the game before continuing."]
         self.push_screen(ConfirmScreen("Install this?", "\n".join(lines), "Install (y)"),
