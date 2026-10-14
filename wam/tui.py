@@ -559,14 +559,14 @@ class DiscoverScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Static("Curated catalog: addons the maintainers have checked. GitHub search: wider but rougher. "
+        yield Static("Curated catalog: addons the maintainers have checked. GitHub search and CurseForge search: wider but rougher. "
                      "Type and press Enter, then pick a result and press Enter to install it.",
                      id="hint", markup=False)
         with Horizontal(id="controls"):
             yield Input(placeholder="Search by name or topic, e.g. fishing (empty = browse everything)", id="q")
         with Horizontal(id="filters"):
             yield Label("Source ")
-            yield Select([("Curated catalog", "catalog"), ("GitHub search", "github")],
+            yield Select([("Curated catalog", "catalog"), ("GitHub search", "github"), ("CurseForge search", "curseforge")],
                          value="catalog", allow_blank=False, id="source")
             yield Select([(label, label) for label in core.SEARCH_CATEGORIES],
                          value="Any category", allow_blank=False, id="cat")
@@ -631,7 +631,7 @@ class DiscoverScreen(Screen):
         sort = self.query_one("#sort", Select).value
         sort = sort if isinstance(sort, str) else "best"
         forever = self.query_one("#forever", Switch).value
-        if source != "github":
+        if source == "catalog":
             if self.index is None:
                 self.set_info("Loading the catalog...")
                 return
@@ -643,16 +643,17 @@ class DiscoverScreen(Screen):
             self.query_one("#results", DataTable).clear()
             self.set_info("Type something to search for, or pick a category.")
             return
-        self.set_info("Searching GitHub...")
-        self.search_worker(text, sort, forever)
+        self.set_info("Searching CurseForge..." if source == "curseforge" else "Searching GitHub...")
+        self.search_worker(text, sort, forever, source)
 
     @work(thread=True, exclusive=True, group="search")
-    def search_worker(self, text: str, sort: str, forever: bool) -> None:
+    def search_worker(self, text: str, sort: str, forever: bool, source: str = "github") -> None:
+        search = core.search_curseforge if source == "curseforge" else core.search_github
         try:
-            results, err = core.search_github(text, sort, forever), None
-        except RuntimeError as e:
+            results, err = search(text, sort, forever), None
+        except RuntimeError as e:        # includes "No CurseForge API key yet. Run: wam cf-key"
             results, err = [], str(e)
-        self.app.call_from_thread(self.show_results, results, err, sort, "github")
+        self.app.call_from_thread(self.show_results, results, err, sort, source)
 
     def show_results(self, results, err, sort, source) -> None:
         table = self.query_one("#results", DataTable)
@@ -677,6 +678,8 @@ class DiscoverScreen(Screen):
                           if seen else "Nothing in the catalog matches. Switch Source to GitHub search for a wider (rougher) search.")
         elif seen:
             self.set_info(f"{len(seen)} result(s), sorted by {label}.  Enter installs the highlighted one.")
+        elif source == "curseforge":
+            self.set_info("Nothing found on CurseForge. Try other words, or turn off Forever only.")
         else:
             self.set_info("Nothing found. This only covers GitHub addons that tag themselves 'wow-addon'; "
                           "try other words.")

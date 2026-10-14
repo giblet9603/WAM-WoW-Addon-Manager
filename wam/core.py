@@ -1232,6 +1232,37 @@ def load_catalog(settings=None, refresh=False):
     return _read_index(BUNDLED_INDEX) or {"schema": 1, "categories": {}, "addons": []}, "bundled"
 
 
+CF_SORT_FIELDS = {"best": 1, "popular": 2, "updated": 3}   # CurseForge sortField: 1 featured, 2 popularity, 3 last updated
+
+
+def search_curseforge(query, sort="best", forever_only=False, limit=30):
+    """Search CurseForge's WoW addons live (needs the user's own API key; see `wam cf-key`).
+    Returns rows shaped like the catalog/GitHub results so the Discover screen can show them."""
+    params = {"gameId": CF_WOW_GAME_ID, "searchFilter": query, "pageSize": 50,
+              "sortField": CF_SORT_FIELDS.get(sort, 1), "sortOrder": "desc"}
+    mods = cf_get("/v1/mods/search", params)["data"]
+    prefix = get_settings(load_config())["forever_version_prefix"]
+    out = []
+    for m in mods:
+        versions = [str(f.get("gameVersion", "")) for f in m.get("latestFilesIndexes", [])]
+        claims_forever = any(v.startswith(prefix) for v in versions)
+        if forever_only and not claims_forever:
+            continue
+        blocked = m.get("allowModDistribution") is False
+        out.append({
+            "key": f"curseforge:{m['id']}",
+            "name": m.get("name", f"project {m['id']}"),
+            "desc": m.get("summary", ""),
+            "stars": None,
+            "updated": str(m.get("dateModified", ""))[:10],
+            "forever": "yes" if claims_forever else "-",
+            "source": "CurseForge" + (" (manual)" if blocked else ""),
+            "archived": False,
+            "url": (m.get("links") or {}).get("websiteUrl", ""),
+        })
+    return out[:limit]
+
+
 def catalog_results(index, query="", category_id=None, sort="best", verified_only=False):
     """Catalog search, shaped like GitHub search results so one screen can show both."""
     out = []
