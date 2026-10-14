@@ -39,6 +39,9 @@ Settings has five choices: your terminal's own colors (the default), WoW standar
 custom (pick your own four colors; hex or names like `gold`). Stuck with unreadable colors?
 `wam settings theme terminal` puts it back.
 
+The WoW standard, Alliance and Horde themes also show their emblem in a box in the bottom-right corner of the main
+screen. It picks the biggest size that fits your window and hides itself when the window is too small.
+
 ## The catalog
 
 `catalog/addons/` holds one small file per addon: where it comes from, which folders it installs, whether the author

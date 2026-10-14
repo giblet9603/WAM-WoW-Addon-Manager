@@ -23,7 +23,7 @@ from textual.widgets import (
     RichLog, Select, Static, Switch,
 )
 
-from . import catalog, core
+from . import art, catalog, core
 
 UPDATE_MODES = ["manual", "notify", "auto"]
 THEME_ORDER = ["terminal", "wow", "alliance", "horde", "custom"]
@@ -219,8 +219,10 @@ class MainScreen(Screen):
             with Vertical(id="left"):
                 yield Input(placeholder="Filter your addons (press f)", id="filter")
                 yield DataTable(id="addons", cursor_type="row", zebra_stripes=True)
-            with VerticalScroll(id="right"):
-                yield Static("", id="detail", markup=False)
+            with Vertical(id="side"):
+                with VerticalScroll(id="right"):
+                    yield Static("", id="detail", markup=False)
+                yield Static("", id="crest", markup=False)
         yield Static("", id="status", markup=False)
         yield Footer()
 
@@ -228,10 +230,34 @@ class MainScreen(Screen):
         table = self.query_one("#addons", DataTable)
         table.add_columns("Addon", "Version", "Status", "Source")
         table.focus()
+        self.watch(self.app, "theme", lambda _: self.refresh_crest())
         if self.app.install is None:
             self.ask_for_install()
         else:
             self.reload()
+
+    # -- corner crest -----------------------------------------------------
+    def on_resize(self) -> None:
+        self.call_after_refresh(self.refresh_crest)
+
+    def on_screen_resume(self) -> None:
+        self.refresh_crest()
+
+    def refresh_crest(self) -> None:
+        """Show the theme's crest in the bottom-right box if there is one and it fits."""
+        try:
+            side = self.query_one("#side")
+            crest = self.query_one("#crest", Static)
+        except Exception:
+            return                                   # not on screen yet
+        picked = art.pick(getattr(self.app, "theme_choice", None), side.size.width - 1, side.size.height)
+        if picked is None:
+            crest.display = False
+            return
+        title, text = picked
+        crest.border_title = title
+        crest.update(text)
+        crest.display = True
 
     # -- data -------------------------------------------------------------
     def build_rows(self) -> list[dict]:
@@ -894,7 +920,11 @@ class WamApp(App):
     #job-log { height: 1fr; }
     #body { height: 1fr; }
     #left { width: 64%; }
-    #right { width: 36%; border-left: solid $primary; padding: 0 2; }
+    #side { width: 36%; border-left: solid $primary; align-horizontal: right; }
+    #right { width: 100%; height: 1fr; padding: 0 2; }
+    /* Corner crest: dots drawn in the theme's main color, hidden when there's no art or no room. */
+    #crest { display: none; width: auto; height: auto; color: $primary; padding: 0 1;
+             border: round $primary; border-title-color: $primary; margin-right: 1; }
     #status { height: 1; padding: 0 1; background: $panel; }
     #hint, #info { padding: 0 1; }
     #controls { height: auto; }
@@ -926,6 +956,7 @@ class WamApp(App):
         config = core.load_config()
         self.install = config["installs"][0] if config["installs"] else None
         self._theme_n = 0
+        self.theme_choice = "terminal"
         self.catalog_index = None
         self.catalog_origin = ""
 
@@ -933,6 +964,7 @@ class WamApp(App):
         """Apply the saved color choice. Anything unusable falls back to the terminal's own colors."""
         settings = core.get_settings(core.load_config())
         choice = settings["theme"]
+        self.theme_choice = choice
         try:
             if choice == "custom":
                 colors = dict(core.THEME_PRESETS["wow"])
@@ -951,6 +983,7 @@ class WamApp(App):
                 return
         except Exception:
             pass
+        self.theme_choice = "terminal"
         self.theme = "ansi-dark"      # the terminal's own colors
 
     @work(thread=True, group="catalog")
